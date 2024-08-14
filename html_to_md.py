@@ -1,5 +1,8 @@
+import argparse
 import os
 import re
+import sys
+
 import bs4
 
 debug = False
@@ -266,19 +269,25 @@ def save_chapter_md(ch_text, md_fname, book_name):
     with open(output_fpath, "w", encoding="utf-8") as f:
         f.write(ch_text)
 
-def main():
+def main(verbose=False):
     """
     TODO: The last step would be taking the TOC and updating all the links so they point to the
     generated .md files rather than files/anchors in the original html...
     """
-    html_fname = "killing_hope.html"
+    vprint = print if verbose else lambda x: None
+    if len(sys.argv) > 1:
+        html_fname = sys.argv[1]
+    else:
+        html_fname = "killing_hope.html"
     # (book_name is for later when we save the individual chapters into a folder)
     book_name = html_fname.replace(".html","")
     with open(html_fname, "r", encoding="utf-8") as f:
         html_str = f.read()
     soup = bs4.BeautifulSoup(html_str, 'html.parser')
+    vprint(f"Parsed {html_fname}")
     # Get a list with the basic info on each chapter (most importantly its location) by parsing TOC
     ch_info = parse_toc(soup)
+    vprint(ch_info)
     # Loop over chapters, parsing as we go
     for cur_ch_info in ch_info:
         #print(cur_ch_info)
@@ -318,7 +327,8 @@ def main():
             ch_num_str = str(0).zfill(2)
         cleaned_title = ch_title.replace(" ","_").replace("'","").replace("/","_")
         ch_fname = f"{ch_num_str}_{cleaned_title}.md"
+        vprint(f"Saving {ch_fname}")
         save_chapter_md(ch_full, ch_fname, book_name)
 
 if __name__ == "__main__":
-    main()
+    main(verbose=True)
